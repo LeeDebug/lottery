@@ -804,19 +804,29 @@ function reset() {
 }
 
 function createHighlight() {
-  let year = new Date().getFullYear() + "";
-  let step = 4,
-    xoffset = 1,
-    yoffset = 1,
-    highlight = [];
+  let year = '92.1' // new Date().getFullYear() + "";
+  let step = 4, // 每个数字之间的水平间隔 四位数设4 三位数设6
+    xoffset = 1, // 起始点的X轴偏移量 
+    yoffset = 1, // 起始点的Y轴偏移量
+    highlight = []; // 用于存储最终高亮坐标的数组
 
-  year.split("").forEach(n => {
-    highlight = highlight.concat(
-      NUMBER_MATRIX[n].map(item => {
-        return `${item[0] + xoffset}-${item[1] + yoffset}`;
-      })
-    );
-    xoffset += step;
+  year.split("").forEach(char => {
+    if (NUMBER_MATRIX[char]) { // 检查是否存在该字符的坐标信息
+      highlight = highlight.concat(
+        NUMBER_MATRIX[char].map(item => {
+          return `${item[0] + xoffset}-${item[1] + yoffset}`;
+        })
+      );
+      xoffset += step;
+    } else if (char == '.') {
+      // 只有当字符不是小数点时才增加xoffset，因为小数点可能不需要额外的空间
+      highlight = highlight.concat(
+        NUMBER_MATRIX[10].map(item => {
+          return `${item[0] + xoffset}-${item[1] + yoffset}`;
+        })
+      );
+      xoffset += step;
+    }
   });
 
   return highlight;
