@@ -220,6 +220,7 @@ function bindEvent() {
     }
 
     let target = e.target.id;
+    console.log('=-=-=-> bindEvent > target: ', target)
     switch (target) {
       // 显示数字墙
       case "welcome":
@@ -300,6 +301,52 @@ function bindEvent() {
   });
 
   window.addEventListener("resize", onWindowResize, false);
+}
+
+document.getElementById('fileInput').addEventListener('change', function(event) {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(worksheet);
+      const prizes = json.map(item => {
+        return {
+          type: item['奖品编号（0为幸运奖）'],
+          count: item['中奖个数'],
+          text: item['奖品等级'],
+          title: item['奖品名称'],
+          img: item['图片地址']
+        };
+      })
+      setPrizesOfExcel(prizes)
+      setTimeout(() => {
+        window.location.reload()
+      }, 100)
+    };
+    reader.readAsArrayBuffer(file);
+  }
+});
+
+
+function setPrizesOfExcel(data) {
+  return new Promise((resolve, reject) => {
+    window.AJAX({
+      url: "/setPrizes",
+      data: {
+        data
+      },
+      success() {
+        resolve();
+      },
+      error() {
+        reject();
+      }
+    });
+  });
 }
 
 function switchScreen(type) {
@@ -798,6 +845,9 @@ function reset() {
   window.AJAX({
     url: "/reset",
     success(data) {
+      setTimeout(() => {
+        window.location.reload()
+      }, 100)
       console.log("重置成功");
     }
   });
@@ -876,7 +926,11 @@ window.onload = function () {
     false
   );
 
+  document.getElementById('setPrizesBox').addEventListener('click', function() {
+    document.getElementById('fileInput').click();
+  });
+
   setTimeout(function () {
-    musicBox.click();
+    // musicBox.click();
   }, 1000);
 };

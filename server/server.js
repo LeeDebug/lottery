@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const path = require("path");
 const chokidar = require("chokidar");
 const cfg = require("./config");
+const cfgTemp = JSON.parse(JSON.stringify(cfg))
 
 const {
   loadXML,
@@ -19,6 +20,7 @@ let app = express(),
   cwd = process.cwd(),
   dataBath = __dirname,
   port = 8090,
+  isCustomPrizes = false,
   curData = {},
   luckyData = {},
   errorData = [],
@@ -68,7 +70,7 @@ app.post("*", (req, res, next) => {
 router.post("/getTempData", (req, res, next) => {
   getLeftUsers();
   res.json({
-    cfgData: cfg,
+    cfgData: isCustomPrizes ? cfg : cfgTemp,
     leftUsers: curData.leftUsers,
     luckyData: luckyData
   });
@@ -76,6 +78,7 @@ router.post("/getTempData", (req, res, next) => {
 
 // 获取所有用户
 router.post("/reset", (req, res, next) => {
+  isCustomPrizes = false;
   luckyData = {};
   errorData = [];
   log(`重置数据成功`);
@@ -135,6 +138,24 @@ router.post("/errorData", (req, res, next) => {
     });
 });
 
+// 奖读取的奖品配置数据存储到数据库中
+router.post("/setPrizes", (req, res, next) => {
+  let data = req.body
+  setPrizes(data.data)
+    .then(t => {
+      res.json({
+        type: "奖品设置成功！"
+      });
+      log(`保存奖品数据成功`);
+    })
+    .catch(data => {
+      res.json({
+        type: "奖品设置失败！"
+      });
+      log(`保存奖品数据失败`);
+    });
+})
+
 // 保存数据到excel中去
 router.post("/export", (req, res, next) => {
   let type = [1, 2, 3, 4, 5, defaultType],
@@ -193,6 +214,14 @@ function setLucky(type, data) {
   }
 
   return saveDataFile(luckyData);
+}
+
+function setPrizes(data) {
+  isCustomPrizes = true;
+  cfg.prizes = data;
+  return new Promise((resolve, reject) => {
+    resolve();
+  });
 }
 
 function setErrorData(data) {
